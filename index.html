@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Braille Practice Studio - Toggle Answer</title>
+    <title>Braille Practice Studio - Perfect Order</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
@@ -179,7 +179,7 @@
             border: none;
             cursor: pointer;
             transition: all 0.15s ease;
-            width: 150px; /* Un poquito más ancho para que entre "Ocultar respuesta" perfectamente */
+            width: 150px;
         }
 
         .btn-reveal {
@@ -193,7 +193,6 @@
             color: #f3f4f6;
         }
 
-        /* Estilo cuando el botón está activo mostrando la respuesta */
         .btn-reveal.active-toggle {
             background: #283342;
             color: #818cf8;
@@ -315,18 +314,28 @@
         '⇧': { dots: [4, 6], cat: 'symbol', desc: 'Prefijo Mayúscula' }
     };
 
-    const keysSequence = Object.keys(brailleDataset);
+    // Forzamos el orden manual estricto de los números para saltarnos el orden automático de JS
+    const orderedNumbers = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
+
+    // Secuencia maestra que define el orden de avance exacto de la práctica
+    const keysSequence = [
+        ...Object.keys(brailleDataset).filter(k => brailleDataset[k].cat === 'letter'),
+        ...orderedNumbers,
+        ...Object.keys(brailleDataset).filter(k => brailleDataset[k].cat === 'symbol')
+    ];
+    
     let currentKey = 'A';
     let activeDots = new Set();
     let isTransitioning = false;
-    let isShowingAnswer = false; // Estado para rastrear si la respuesta está visible
+    let isShowingAnswer = false;
 
     function buildMenus() {
         const lettersGrid = document.getElementById('letters-menu');
         const numbersGrid = document.getElementById('numbers-menu');
         const symbolsGrid = document.getElementById('symbols-menu');
 
-        for (const [key, val] of Object.entries(brailleDataset)) {
+        keysSequence.forEach(key => {
+            const val = brailleDataset[key];
             const btn = document.createElement('button');
             btn.className = `char-btn btn-${key}`;
             btn.innerText = key;
@@ -335,7 +344,8 @@
             if (val.cat === 'letter') lettersGrid.appendChild(btn);
             else if (val.cat === 'number') numbersGrid.appendChild(btn);
             else if (val.cat === 'symbol') symbolsGrid.appendChild(btn);
-        }
+        });
+        
         updateActiveMenuHighlight();
         selectCharacter('A');
     }
@@ -343,7 +353,7 @@
     function selectCharacter(key) {
         currentKey = key;
         resetGrid();
-        resetRevealButton(); // Resetea el botón si cambias de letra
+        resetRevealButton();
         document.getElementById('target-char').innerText = key;
         document.getElementById('target-desc').innerText = brailleDataset[key].desc;
         document.getElementById('feedback').innerText = "";
@@ -360,7 +370,6 @@
     function toggleDot(dotNumber) {
         if (isTransitioning) return;
         
-        // Si el usuario empieza a tocar puntos manualmente, quitamos el estado de "Ver respuesta"
         if (isShowingAnswer) {
             resetRevealButton();
             resetGrid();
@@ -405,7 +414,6 @@
         }
     }
 
-    // Nueva función controladora del botón tipo Interruptor (Toggle)
     function toggleRevealAnswer() {
         if (isTransitioning) return;
         
@@ -413,7 +421,6 @@
         const feedbackDiv = document.getElementById('feedback');
 
         if (!isShowingAnswer) {
-            // MOSTRAR RESPUESTA
             resetGrid();
             const correctDots = brailleDataset[currentKey].dots;
             
@@ -430,7 +437,6 @@
             revealBtn.classList.add('active-toggle');
             isShowingAnswer = true;
         } else {
-            // OCULTAR RESPUESTA (Limpiar para reintentar)
             resetGrid();
             resetRevealButton();
             feedbackDiv.innerText = "";
