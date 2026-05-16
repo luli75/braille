@@ -1,4 +1,4 @@
-const CACHE_NAME = 'braille-studio-v2';
+const CACHE_NAME = 'braille-studio-v3';
 const ASSETS = [
   'index.html',
   'manifest.json',
